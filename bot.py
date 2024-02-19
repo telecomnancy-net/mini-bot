@@ -34,7 +34,7 @@ async def reac(payload):
     message = await channel.fetch_message(payload.message_id)
     user = bot.get_user(payload.user_id)
     
-    if not user.bot and len(message.embeds) > 0 and len(message.reactions) == 4:
+    if not user.bot and len(message.embeds) > 0 and len(message.reactions) == 4 and message.author.id == bot.user.id:
         Lreac = []
         for r in message.reactions:
             Lreac.append((r.count,r.emoji))
