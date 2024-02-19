@@ -91,7 +91,7 @@ async def post(ctx: discord.Interaction, message: str, minitel: bool):
     if get_channel_id(ctx.guild.id) is None:
         await ctx.response.send_message("Le salon où envoyer les citations n'a pas été défini. Utilisez la commande **/setchannel** pour le définir.", ephemeral=True)
         return
-    await envoyer_dans_channel_dedie(ctx.user, message, ctx.guild.id)
+    await envoyer_dans_channel_dedie(ctx.user, message, ctx.guild.id, minitel)
     if minitel:
         await ctx.response.send_message(f"**Citation envoyée !** (Le bureau **est** au courant)\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitez retirer cette contributaion avant qu'elle ne paraisse dans un Mini Tel', contacte le bureau.", ephemeral=True)
         await envoyer_au_bureau_via_post(ctx.user, message)
@@ -122,9 +122,12 @@ async def envoyer_au_bureau_via_post(author, content):
     await msgembed.add_reaction('🟢')
     valeurs = (content, content, 0, 0, author.id)
 
-async def envoyer_dans_channel_dedie(author, content, serverid):
+async def envoyer_dans_channel_dedie(author, content, serverid, minitel):
     channelCitations = bot.get_channel(get_channel_id(serverid))
-    embedVar = discord.Embed(title="", color=discord.Colour(int("FFFFFF", 16)), description=content)
+    if minitel:
+        embedVar = discord.Embed(title="", color=discord.Colour(int("734F96", 16)), description=content)
+    else :
+        embedVar = discord.Embed(title="", color=discord.Colour(int("FFFFFF", 16)), description=content)
     embedVar.set_author(name=author.name, icon_url=author.avatar)
     msgembed = await channelCitations.send(embed=embedVar)
     valeurs = (content, content, 0, 0, author.id)
