@@ -94,6 +94,7 @@ async def post(ctx: discord.Interaction, message: str, minitel: bool):
     if ctx.guild is None:
         await ctx.response.send_message("Merci pour ta contribution, message transféré au bureau !\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitez retirer cette contributaion avant qu'elle ne paraisse dans un Mini Tel', contacte le bureau.\n*Astuce : Tu n'es pas obligé.e d'utiliser /post dans les DMs du bot, tu peux juste y écrire ta citation !*", ephemeral=True)
         await envoyer_au_bureau_via_post(ctx.user, message)
+        return
     if get_channel_id(ctx.guild.id) is None:
         await ctx.response.send_message("Le salon où envoyer les citations n'a pas été défini. Utilisez la commande **/setchannel** pour le définir.", ephemeral=True)
         return
