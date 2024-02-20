@@ -72,6 +72,9 @@ async def on_message(message):
     description="Définir le salon où envoyer les citations"
 )
 async def setchannel(ctx: discord.Interaction):
+    if ctx.guild is None:
+        await ctx.response.send_message("Cette commande n'est pas disponible en message privé.", ephemeral=True)
+        return
     if ctx.user.guild_permissions.manage_channels:
         set_channel_id(ctx.guild.id, ctx.channel.id)
         save_channel_id()
