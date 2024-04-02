@@ -1,5 +1,6 @@
 import discord
 from discord import app_commands
+import datetime
 
 default_intents = discord.Intents.all()
 bot = discord.Client(intents=default_intents)
@@ -107,11 +108,12 @@ async def post(ctx: discord.Interaction, message: str, minitel: bool):
 
 @tree.command(
     name='dump',
-    description="Dump toutes les citations dans la console",
-    guild=discord.Object(id=691683236534943826)
+    description="Dump toutes les citations dans la console"
 )
 @app_commands.describe(days="Le nombre de jours à remonter dans le passé")
 @app_commands.rename(days="nbjours")
+@app_commands.guild_only()
+#@app_commands.guilds(691683236534943826) # Le serveur correspond pas je sais pas pourquoi...
 async def dump(ctx: discord.Interaction, days: int):
     if ctx.guild is None:
         await ctx.response.send_message("Cette commande n'est pas disponible en message privé.", ephemeral=True)
@@ -157,10 +159,18 @@ async def envoyer_dans_channel_dedie(author, content, serverid, minitel):
     valeurs = (content, content, 0, 0, author.id)
 
 async def dump_all_quotes(days):
+    now = discord.utils.utcnow()
+    start_date = now - datetime.timedelta(days=days)
+    sortie = open(f"dump/{int(now.timestamp())}.txt", "a", encoding="utf-8")
+    sortie.write(f"-- Dump du {now.day}/{now.month}/{now.year}\n")
+    sortie.write(f"-- À partir du {start_date.day}/{start_date.month}/{start_date.year}\n")
+    sortie.write("==== DEBUT DE DUMP ====\n")
     channelCitations = bot.get_channel(channelCitationsID)
-    async for message in channelCitations.history(limit=None, after=discord.utils.utcnow() - discord.timedelta(days=days)):
-        if len(message.embeds) > 0 and message.embeds[0].colour == discord.Colour(int("78B159", 16)):
-            print(message.embeds[0].description)
+    history = channelCitations.history(limit=None, after=start_date, oldest_first=True)
+    messages = [m async for m in history if len(m.embeds) > 0 and m.embeds[0].colour == discord.Colour(int("78B159", 16))]
+    for message in messages:
+        sortie.write(message.embeds[0].description + "\n")
+    sortie.write("==== FIN DE DUMP ====")
 
 @bot.event
 async def on_raw_reaction_add(payload):    
