@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 import datetime
-import os
+import io
 
 default_intents = discord.Intents.all()
 bot = discord.Client(intents=default_intents)
@@ -124,8 +124,8 @@ async def dump(ctx: discord.Interaction, days: int):
         await ctx.response.send_message(f"Cette commande n'est pas disponible sur ce serveur.", ephemeral=True)
         return
     if ctx.user.guild_permissions.administrator:
-        quote_file = await dump_all_quotes(days)
-        await ctx.response.send_message("Dump effectué", file=discord.File(quote_file), ephemeral=True)
+        quote_file, quote_filename = await dump_all_quotes(days)
+        await ctx.response.send_message("Dump effectué", file=discord.File(fp=io.StringIO(quote_file), filename=quote_filename), ephemeral=True)
     else:
         await ctx.response.send_message("Vous n'avez pas la permission pour utiliser cette commande.", ephemeral=True)
 
@@ -166,19 +166,18 @@ async def envoyer_dans_channel_dedie(author, content, serverid, minitel):
 async def dump_all_quotes(days):
     now = discord.utils.utcnow()
     start_date = now - datetime.timedelta(days=days)
-    filename = f"dump/{int(now.timestamp())}.txt"
-    sortie = open(filename, "x", encoding="utf-8")
-    sortie.write(f"-- Dump du {now.day}/{now.month}/{now.year}\n")
-    sortie.write(f"-- À partir du {start_date.day}/{start_date.month}/{start_date.year}\n")
-    sortie.write("==== DEBUT DE DUMP ====\n")
+    filename = f"{int(now.timestamp())}.txt"
+    sortie = ""
+    sortie += f"-- Dump du {now.day}/{now.month}/{now.year}\n"
+    sortie += f"-- À partir du {start_date.day}/{start_date.month}/{start_date.year}\n"
+    sortie += "==== DEBUT DE DUMP ====\n"
     channelCitations = bot.get_channel(channelCitationsID)
     history = channelCitations.history(limit=None, after=start_date, oldest_first=True)
     messages = [m async for m in history if len(m.embeds) > 0 and m.embeds[0].colour == discord.Colour(int("78B159", 16))]
     for message in messages:
-        sortie.write(message.embeds[0].description + "\n")
-    sortie.write("==== FIN DE DUMP ====")
-    sortie.close()
-    return filename
+        sortie += (message.embeds[0].description + "\n")
+    sortie += "==== FIN DE DUMP ===="
+    return sortie, filename
 
 @bot.event
 async def on_raw_reaction_add(payload):    
