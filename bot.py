@@ -8,6 +8,7 @@ TOKEN = open("secrettoken.txt", "r").read()
 tree = app_commands.CommandTree(bot)
 
 channelCitationsID = 692060978342395904
+serverID = 691683236534943826
 serverChannelID = {}
 
 def get_channel_id(serverID):
@@ -113,14 +114,17 @@ async def post(ctx: discord.Interaction, message: str, minitel: bool):
 @app_commands.describe(days="Le nombre de jours à remonter dans le passé")
 @app_commands.rename(days="nbjours")
 @app_commands.guild_only()
-#@app_commands.guilds(691683236534943826) # Le serveur correspond pas je sais pas pourquoi...
+@app_commands.guilds(serverID) # Marche pas ??!??§,?§,!,§?,,??????
 async def dump(ctx: discord.Interaction, days: int):
     if ctx.guild is None:
         await ctx.response.send_message("Cette commande n'est pas disponible en message privé.", ephemeral=True)
         return
+    if ctx.guild_id != serverID:
+        await ctx.response.send_message(f"Cette commande n'est pas disponible sur ce serveur.", ephemeral=True)
+        return
     if ctx.user.guild_permissions.administrator:
-        await dump_all_quotes(days)
-        await ctx.response.send_message("Dump effectué", ephemeral=True)
+        quote_file = await dump_all_quotes(days)
+        await ctx.response.send_message("Dump effectué", file=discord.File(quote_file), ephemeral=True)
     else:
         await ctx.response.send_message("Vous n'avez pas la permission pour utiliser cette commande.", ephemeral=True)
 
@@ -161,7 +165,8 @@ async def envoyer_dans_channel_dedie(author, content, serverid, minitel):
 async def dump_all_quotes(days):
     now = discord.utils.utcnow()
     start_date = now - datetime.timedelta(days=days)
-    sortie = open(f"dump/{int(now.timestamp())}.txt", "a", encoding="utf-8")
+    filename = f"dump/{int(now.timestamp())}.txt"
+    sortie = open(filename, "a", encoding="utf-8")
     sortie.write(f"-- Dump du {now.day}/{now.month}/{now.year}\n")
     sortie.write(f"-- À partir du {start_date.day}/{start_date.month}/{start_date.year}\n")
     sortie.write("==== DEBUT DE DUMP ====\n")
@@ -171,6 +176,8 @@ async def dump_all_quotes(days):
     for message in messages:
         sortie.write(message.embeds[0].description + "\n")
     sortie.write("==== FIN DE DUMP ====")
+    sortie.close()
+    return filename
 
 @bot.event
 async def on_raw_reaction_add(payload):    
@@ -185,6 +192,7 @@ async def on_ready():
     load_channel_id()
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="vos citations"))
     await tree.sync()
+    await tree.sync(guild=discord.Object(serverID))
     print("Le bot est prêt")
 
 bot.run(TOKEN)
