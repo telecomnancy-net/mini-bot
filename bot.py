@@ -105,6 +105,23 @@ async def post(ctx: discord.Interaction, message: str, minitel: bool):
     else:
         await ctx.response.send_message(f"**Citation envoyée !** (Le bureau n'est **pas** au courant)", ephemeral=True)
 
+@tree.command(
+    name='dump',
+    description="Dump toutes les citations dans la console",
+    guild=discord.Object(id=691683236534943826)
+)
+@app_commands.describe(limit="Le nombre de jours à remonter dans le passé")
+@app_commands.rename(limit="nbjours")
+async def dump(ctx: discord.Interaction, days: int):
+    if ctx.guild is None:
+        await ctx.response.send_message("Cette commande n'est pas disponible en message privé.", ephemeral=True)
+        return
+    if ctx.user.guild_permissions.administrator:
+        await dump_all_quotes(days)
+        await ctx.response.send_message("Dump effectué", ephemeral=True)
+    else:
+        await ctx.response.send_message("Vous n'avez pas la permission pour utiliser cette commande.", ephemeral=True)
+
 async def envoyer_au_bureau(message):
     channelCitations = bot.get_channel(channelCitationsID)
     print(message.content)
@@ -138,6 +155,12 @@ async def envoyer_dans_channel_dedie(author, content, serverid, minitel):
     embedVar.set_author(name=author.name, icon_url=author.avatar)
     msgembed = await channelCitations.send(embed=embedVar)
     valeurs = (content, content, 0, 0, author.id)
+
+async def dump_all_quotes(days):
+    channelCitations = bot.get_channel(channelCitationsID)
+    async for message in channelCitations.history(limit=None, after=discord.utils.utcnow() - discord.timedelta(days=days)):
+        if len(message.embeds) > 0 and message.embeds[0].colour == discord.Colour(int("78B159", 16)):
+            print(message.embeds[0].description)
 
 @bot.event
 async def on_raw_reaction_add(payload):    
