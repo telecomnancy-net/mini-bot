@@ -110,8 +110,8 @@ async def post(ctx: discord.Interaction, message: str, minitel: bool):
     description="Dump toutes les citations dans la console",
     guild=discord.Object(id=691683236534943826)
 )
-@app_commands.describe(limit="Le nombre de jours à remonter dans le passé")
-@app_commands.rename(limit="nbjours")
+@app_commands.describe(days="Le nombre de jours à remonter dans le passé")
+@app_commands.rename(days="nbjours")
 async def dump(ctx: discord.Interaction, days: int):
     if ctx.guild is None:
         await ctx.response.send_message("Cette commande n'est pas disponible en message privé.", ephemeral=True)
