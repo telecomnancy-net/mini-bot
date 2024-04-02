@@ -166,7 +166,6 @@ async def envoyer_dans_channel_dedie(author, content, serverid, minitel):
 async def dump_all_quotes(days):
     now = discord.utils.utcnow()
     start_date = now - datetime.timedelta(days=days)
-    os.makedirs('dump', exist_ok=True)
     filename = f"dump/{int(now.timestamp())}.txt"
     sortie = open(filename, "x", encoding="utf-8")
     sortie.write(f"-- Dump du {now.day}/{now.month}/{now.year}\n")

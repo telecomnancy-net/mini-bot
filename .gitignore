@@ -2,4 +2,4 @@ secrettoken.txt
 channelID.txt
 env/
 .venv
-dump/
+dump/*.txt
