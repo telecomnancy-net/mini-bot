@@ -125,7 +125,8 @@ async def dump(ctx: discord.Interaction, days: int):
         return
     if ctx.user.guild_permissions.administrator:
         quote_file, quote_filename = await dump_all_quotes(days)
-        await ctx.response.send_message("Dump effectué", file=discord.File(fp=io.StringIO(quote_file), filename=quote_filename), ephemeral=True)
+        await ctx.response.send_message("**Dump effectué !**\nLe fichier est sous format TSV, il est possible de l'ouvrir dans un tableur en définissant les tabulations comme les séparateurs.",
+                                        file=discord.File(fp=io.StringIO(quote_file), filename=quote_filename), ephemeral=True)
     else:
         await ctx.response.send_message("Vous n'avez pas la permission pour utiliser cette commande.", ephemeral=True)
 
@@ -166,18 +167,34 @@ async def envoyer_dans_channel_dedie(author, content, serverid, minitel):
 async def dump_all_quotes(days):
     now = discord.utils.utcnow()
     start_date = now - datetime.timedelta(days=days)
-    filename = f"{int(now.timestamp())}.txt"
+    filename = f"{int(now.timestamp())}.tsv"
     sortie = ""
     sortie += f"-- Dump du {now.day}/{now.month}/{now.year}\n"
     sortie += f"-- À partir du {start_date.day}/{start_date.month}/{start_date.year}\n"
     sortie += "==== DEBUT DE DUMP ====\n"
+    sortie += "Citation\tAuteur\tCouleur\n"
     channelCitations = bot.get_channel(channelCitationsID)
     history = channelCitations.history(limit=None, after=start_date, oldest_first=True)
-    messages = [m async for m in history if len(m.embeds) > 0 and m.embeds[0].colour == discord.Colour(int("78B159", 16))]
+    messages = [m async for m in history if len(m.embeds) > 0]
     for message in messages:
-        sortie += (message.embeds[0].description + "\n")
+        sortie += message.embeds[0].description.replace("\n", "; ") + "\t"
+        sortie += message.embeds[0].author.name + "\t"
+        sortie += get_couleur(message.embeds[0].color) + "\n"
     sortie += "==== FIN DE DUMP ===="
     return sortie, filename
+
+def get_couleur(col: discord.Colour):
+    col = str(col)[1:].upper()
+    if col == "31373D":
+        return 'Noir'
+    elif col == "DD2E44":
+        return 'Rouge'
+    elif col == "F4900C":
+        return 'Orange'
+    elif col == "78B159":
+        return 'Vert'
+    else:
+        return 'Blanc'
 
 @bot.event
 async def on_raw_reaction_add(payload):    
