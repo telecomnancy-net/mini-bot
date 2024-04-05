@@ -2,6 +2,8 @@
 
 Ce bot Discord est conçu pour gérer et poster des citations dans un serveur Discord, en permettant aux utilisateurs de soumettre des citations et de les afficher dans un canal spécifique. Voici un aperçu des fonctionnalités et des instructions pour configurer et utiliser le bot.
 
+Il permet au Mini Tel' de récolter des citations pour les catégories Citations d'élèves, Citations de profs et Vu/Pas Vu/Entendu/Pas Entendu.
+
 ---
 
 ### Instructions
@@ -17,8 +19,9 @@ Ce bot Discord est conçu pour gérer et poster des citations dans un serveur Di
 
 3. **Utilisation des commandes**
    - Le bot répond à deux commandes principales :
-     - `/setchannel` : Définit le salon où envoyer les citations.
-     - `/post` : Poster une citation dans le salon défini.
+     - `/setchannel` : Définit le salon où envoyer les citations. (Nécessite la permission *Gérer les salons*)
+     - `/post <citation> <envoyer>` : Poster une citation dans le salon défini. Si `envoyer` est sur True, elle sera aussi envoyée dans le salon des votes (`channelCitationsID`).
+     - `/dump <n>` : Exporte toutes les citations des *n* derniers jours au format TSV. Elle n'est utilisable que par un administrateur sur le serveur "principal" du bot (`mainServerID`).
 
 4. **Interactions utilisateur**
    - Les utilisateurs peuvent poster des citations via des commandes ou directement dans les messages privés du bot.
@@ -39,8 +42,8 @@ Ce bot Discord est conçu pour gérer et poster des citations dans un serveur Di
 - Python 3.x
 - Un compte Discord pour créer un bot et gérer les autorisations nécessaires.
 
-### Auteur
-Ce bot a été créé par Boufty
+### Auteurs
+Ce bot a été créé par PYJ sur la base du deuxième bot par Thomas LERUEZ
 
 Pour toute question ou assistance, veuillez me contacter à @boufty.
 
