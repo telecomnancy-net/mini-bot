@@ -9,7 +9,7 @@ TOKEN = open("secrettoken.txt", "r").read()
 tree = app_commands.CommandTree(bot)
 
 channelCitationsID = 692060978342395904
-serverID = 691683236534943826
+mainServerID = 691683236534943826
 serverChannelID = {}
 
 def get_channel_id(serverID):
@@ -115,12 +115,12 @@ async def post(ctx: discord.Interaction, message: str, minitel: bool):
 @app_commands.describe(days="Le nombre de jours à remonter dans le passé")
 @app_commands.rename(days="nbjours")
 @app_commands.guild_only()
-@app_commands.guilds(serverID) # Marche pas ??!??§,?§,!,§?,,??????
+@app_commands.guilds(mainServerID)
 async def dump(ctx: discord.Interaction, days: int):
     if ctx.guild is None:
         await ctx.response.send_message("Cette commande n'est pas disponible en message privé.", ephemeral=True)
         return
-    if ctx.guild_id != serverID:
+    if ctx.guild_id != mainServerID:
         await ctx.response.send_message(f"Cette commande n'est pas disponible sur ce serveur.", ephemeral=True)
         return
     if ctx.user.guild_permissions.administrator:
@@ -209,7 +209,7 @@ async def on_ready():
     load_channel_id()
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="vos citations"))
     await tree.sync()
-    await tree.sync(guild=discord.Object(serverID))
+    await tree.sync(guild=discord.Object(mainServerID))
     print("Le bot est prêt")
 
 bot.run(TOKEN)
