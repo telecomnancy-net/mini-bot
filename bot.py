@@ -124,8 +124,9 @@ async def dump(ctx: discord.Interaction, days: int):
         await ctx.response.send_message(f"Cette commande n'est pas disponible sur ce serveur.", ephemeral=True)
         return
     if ctx.user.guild_permissions.administrator:
+        await ctx.response.defer(ephemeral=True)
         quote_file, quote_filename = await dump_all_quotes(days)
-        await ctx.response.send_message("**Dump effectué !**\nLe fichier est sous format TSV, il est possible de l'ouvrir dans un tableur en définissant les tabulations comme les séparateurs.",
+        await ctx.followup.send("**Dump effectué !**\nLe fichier est sous format TSV, il est possible de l'ouvrir dans un tableur en définissant les tabulations comme les séparateurs.",
                                         file=discord.File(fp=io.StringIO(quote_file), filename=quote_filename), ephemeral=True)
     else:
         await ctx.response.send_message("Vous n'avez pas la permission pour utiliser cette commande.", ephemeral=True)
@@ -175,7 +176,7 @@ async def dump_all_quotes(days):
     sortie += "Citation\tAuteur\tCouleur\n"
     channelCitations = bot.get_channel(channelCitationsID)
     history = channelCitations.history(limit=None, after=start_date, oldest_first=True)
-    messages = [m async for m in history if len(m.embeds) > 0]
+    messages = [m async for m in history if len(m.embeds) > 0 and m.embeds[0].description is not None]
     for message in messages:
         sortie += message.embeds[0].description.replace("\n", "; ") + "\t"
         sortie += message.embeds[0].author.name + "\t"
