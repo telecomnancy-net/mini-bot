@@ -32,6 +32,8 @@ def load_channel_id():
             serverID, channelID = line.split(" ")
             serverChannelID[int(serverID)] = int(channelID)
 
+emojis_couleurs = ['⚫', '🔴', '\U0001f7e0', '\U0001f7e2']
+
 async def reac(payload):
     channel = bot.get_channel(payload.channel_id)
     message = await channel.fetch_message(payload.message_id)
@@ -42,6 +44,7 @@ async def reac(payload):
         for r in message.reactions:
             Lreac.append((r.count,r.emoji))
         Lreac.sort(key=lambda x: x[0], reverse=True)
+        Lreac = [(x,y) for x,y in Lreac if y in emojis_couleurs]
         authorid = message.embeds[0].author.icon_url.split('/')[4]
         col = process_react(Lreac)
                     
@@ -60,9 +63,6 @@ def process_react(Lreac):
             return "F4900C"
         elif Lreac[0][1] == '\U0001f7e2':
             return "78B159"
-        else:
-            Lreac.pop(0)
-            return process_react(Lreac)
     else:
         return "FFFFFF"
 
