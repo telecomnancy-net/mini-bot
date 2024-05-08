@@ -37,33 +37,34 @@ async def reac(payload):
     message = await channel.fetch_message(payload.message_id)
     user = bot.get_user(payload.user_id)
     
-    if not user.bot and len(message.embeds) > 0 and len(message.reactions) == 4 and message.author.id == bot.user.id:
+    if not user.bot and len(message.embeds) > 0 and len(message.reactions) >= 4 and message.author.id == bot.user.id:
         Lreac = []
         for r in message.reactions:
             Lreac.append((r.count,r.emoji))
-        Lreac.sort()
+        Lreac.sort(key=lambda x: x[0], reverse=True)
         authorid = message.embeds[0].author.icon_url.split('/')[4]
-        if Lreac[3][0] > 1 and Lreac[3][0] != Lreac[2][0]:
-            if Lreac[3][1] == '⚫':
-                col = "31373D"
-                valeurs = (1, message.embeds[0].description, authorid)
-            elif Lreac[3][1] == '🔴':
-                col = "DD2E44"
-                valeurs = (2, message.embeds[0].description, authorid)
-            elif Lreac[3][1] == '\U0001f7e0':
-                col = "F4900C"
-                valeurs = (3, message.embeds[0].description, authorid)
-            elif Lreac[3][1] == '\U0001f7e2':
-                col = "78B159"
-                valeurs = (4, message.embeds[0].description, authorid)
-        else:
-            col = "FFFFFF"
-            valeurs = (0, message.embeds[0].description, authorid)
+        col = process_react(Lreac)
                     
         embedVar = discord.Embed(title="", color=discord.Colour(int(col, 16)), description=message.embeds[0].description)
         embedVar.set_author(name=message.embeds[0].author.name, icon_url=message.embeds[0].author.icon_url)
         
         await message.edit(embed=embedVar)
+
+def process_react(Lreac):
+    if len(Lreac) > 0 and Lreac[0][0] > 1 and Lreac[0][0] != Lreac[1][0]:
+        if Lreac[0][1] == '⚫':
+            return "31373D"
+        elif Lreac[0][1] == '🔴':
+            return "DD2E44"
+        elif Lreac[0][1] == '\U0001f7e0':
+            return "F4900C"
+        elif Lreac[0][1] == '\U0001f7e2':
+            return "78B159"
+        else:
+            Lreac.pop(0)
+            return process_react(Lreac)
+    else:
+        return "FFFFFF"
 
 @bot.event
 async def on_message(message):
