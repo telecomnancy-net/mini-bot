@@ -40,11 +40,9 @@ async def reac(payload):
     user = bot.get_user(payload.user_id)
     
     if not user.bot and len(message.embeds) > 0 and len(message.reactions) >= 4 and message.author.id == bot.user.id:
-        Lreac = []
+        Lreac = {}
         for r in message.reactions:
-            Lreac.append((r.count,r.emoji))
-        Lreac.sort(key=lambda x: x[0], reverse=True)
-        Lreac = [(x,y) for x,y in Lreac if y in emojis_couleurs]
+            if r.emoji in emojis_couleurs: Lreac[r.emoji] = r.count
         col = process_react(Lreac)
                     
         embedVar = discord.Embed(title="", color=discord.Colour(int(col, 16)), description=message.embeds[0].description)
@@ -53,17 +51,17 @@ async def reac(payload):
         await message.edit(embed=embedVar)
 
 def process_react(Lreac):
-    if len(Lreac) > 0 and Lreac[0][0] > 1 and Lreac[0][0] != Lreac[1][0]:
-        if Lreac[0][1] == '⚫':
-            return "31373D"
-        elif Lreac[0][1] == '🔴':
-            return "DD2E44"
-        elif Lreac[0][1] == '\U0001f7e0':
-            return "F4900C"
-        elif Lreac[0][1] == '\U0001f7e2':
-            return "78B159"
-    else:
-        return "FFFFFF"
+    max_reac = max(Lreac.values())
+    if max_reac == 1: return 'FFFFFF'
+    if '⚫' in Lreac and Lreac['⚫'] > 1: return '31373D'
+    majority = [emoji for emoji in Lreac if Lreac[emoji] == max_reac]
+    if len(majority) == 1:
+        if majority[0] == '🔴': return 'DD2E44'
+        if majority[0] == '\U0001f7e0': return 'F4900C'
+        if majority[0] == '\U0001f7e2': return '78B159'
+    elif '🔴' in majority: return 'DD2E44'
+    else: return 'FFFFFF'
+    
 
 @bot.event
 async def on_message(message):
