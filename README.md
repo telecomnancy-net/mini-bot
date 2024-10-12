@@ -43,7 +43,7 @@ Il permet au Mini Tel' de récolter des citations pour les catégories Citations
 - Un compte Discord pour créer un bot et gérer les autorisations nécessaires.
 
 ### Auteurs
-Ce bot a été créé par PYJ sur la base du deuxième bot par Thomas LERUEZ
+Ce bot a été créé par Pauline J. sur la base du deuxième bot par Thomas LERUEZ
 
 Pour toute question ou assistance, veuillez me contacter à @boufty.
 
