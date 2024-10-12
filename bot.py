@@ -45,7 +45,6 @@ async def reac(payload):
             Lreac.append((r.count,r.emoji))
         Lreac.sort(key=lambda x: x[0], reverse=True)
         Lreac = [(x,y) for x,y in Lreac if y in emojis_couleurs]
-        authorid = message.embeds[0].author.icon_url.split('/')[4]
         col = process_react(Lreac)
                     
         embedVar = discord.Embed(title="", color=discord.Colour(int(col, 16)), description=message.embeds[0].description)
