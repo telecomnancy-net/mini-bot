@@ -70,6 +70,27 @@ async def on_message(message):
         await envoyer_au_bureau(message)
 
 @tree.command(
+    name='help',
+    description="Afficher l'aide"
+)
+async def help(ctx: discord.Interaction):
+    await ctx.response.send_message("""
+## Commande /post
+- **Description :** Permet de poster une citation
+- **Utilisation :** `/post [citation] [envoyer]`
+- **Arguments :**
+  - **citation :** La citation à poster
+  - **envoyer :** Si la citation doit être envoyée au bureau pour potentiellement apparaître dans le prochain numéro.
+Les citations envoyées à l'aide de la commande post seront envoyées dans le salon défini par la commande /setchannel.
+Il est **impossible** de poster une citation sans qu'un salon ne soit défini.
+## Commande /setchannel
+- **Description :** Définir le salon actuel comme salon où envoyer les citations
+- **Utilisation :** `/setchannel`
+- **Arguments :** Aucun
+Vous pouvez toujours envoyer des citations en message privé au bot, elles seront automatiquement transférées au bureau.
+""", ephemeral=True)
+
+@tree.command(
     name='setchannel',
     description="Définir le salon où envoyer les citations"
 )
