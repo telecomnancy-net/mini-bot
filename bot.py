@@ -47,6 +47,7 @@ async def reac(payload):
                     
         embedVar = discord.Embed(title="", color=discord.Colour(int(col, 16)), description=message.embeds[0].description)
         embedVar.set_author(name=message.embeds[0].author.name, icon_url=message.embeds[0].author.icon_url)
+        embedVar.set_footer(text=message.embeds[0].footer.text)
         
         await message.edit(embed=embedVar)
 
@@ -93,16 +94,18 @@ async def setchannel(ctx: discord.Interaction):
 @app_commands.rename(minitel="envoyer")
 async def post(ctx: discord.Interaction, message: str, minitel: bool):
     if ctx.guild is None:
+        server_name = "Message privé"
         await ctx.response.send_message("Merci pour ta contribution, message transféré au bureau !\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitez retirer cette contributaion avant qu'elle ne paraisse dans un Mini Tel', contacte le bureau.\n*Astuce : Tu n'es pas obligé.e d'utiliser /post dans les DMs du bot, tu peux juste y écrire ta citation !*", ephemeral=True)
-        await envoyer_au_bureau_via_post(ctx.user, message)
+        await envoyer_au_bureau_via_post(ctx.user, message, server_name)
         return
     if get_channel_id(ctx.guild.id) is None:
         await ctx.response.send_message("Le salon où envoyer les citations n'a pas été défini. Utilisez la commande **/setchannel** pour le définir.", ephemeral=True)
         return
     await envoyer_dans_channel_dedie(ctx.user, message, ctx.guild.id, minitel)
     if minitel:
+        server_name = f"Serveur : {ctx.guild.name}"
         await ctx.response.send_message(f"**Citation envoyée !** (Le bureau **est** au courant)\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitez retirer cette contributaion avant qu'elle ne paraisse dans un Mini Tel', contacte le bureau.", ephemeral=True)
-        await envoyer_au_bureau_via_post(ctx.user, message)
+        await envoyer_au_bureau_via_post(ctx.user, message, server_name)
     else:
         await ctx.response.send_message(f"**Citation envoyée !** (Le bureau n'est **pas** au courant)", ephemeral=True)
 
@@ -135,6 +138,7 @@ async def envoyer_au_bureau(message):
     content = message.content.replace("; ", "\n")
     embedVar = discord.Embed(title="", color=discord.Colour(int("FFFFFF", 16)), description=content)
     embedVar.set_author(name=message.author.name, icon_url=message.author.avatar)
+    embedVar.set_footer(text=f"Message privé")
     msgembed = await channelCitations.send(embed=embedVar)
     await message.channel.send(content="Merci pour ta contribution, message transféré au bureau !\n\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitez retirer cette contributaion avant qu'elle ne paraisse dans un Mini Tel', contacte le bureau.")
     await msgembed.add_reaction('⚫')
@@ -143,11 +147,12 @@ async def envoyer_au_bureau(message):
     await msgembed.add_reaction('🟢')
     valeurs = (message.content, message.content, 0, 0, message.author.id)
 
-async def envoyer_au_bureau_via_post(author, content):
+async def envoyer_au_bureau_via_post(author, content, server_name):
     channelCitations = bot.get_channel(channelCitationsID)
     content = content.replace("; ", "\n")
     embedVar = discord.Embed(title="", color=discord.Colour(int("FFFFFF", 16)), description=content)
     embedVar.set_author(name=author.name, icon_url=author.avatar)
+    embedVar.set_footer(text=server_name)
     msgembed = await channelCitations.send(embed=embedVar)
     await msgembed.add_reaction('⚫')
     await msgembed.add_reaction('🔴')
