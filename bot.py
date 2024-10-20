@@ -132,7 +132,8 @@ async def dump(ctx: discord.Interaction, days: int):
 async def envoyer_au_bureau(message):
     channelCitations = bot.get_channel(channelCitationsID)
     print(message.content)
-    embedVar = discord.Embed(title="", color=discord.Colour(int("FFFFFF", 16)), description=message.content)
+    content = message.content.replace("; ", "\n")
+    embedVar = discord.Embed(title="", color=discord.Colour(int("FFFFFF", 16)), description=content)
     embedVar.set_author(name=message.author.name, icon_url=message.author.avatar)
     msgembed = await channelCitations.send(embed=embedVar)
     await message.channel.send(content="Merci pour ta contribution, message transféré au bureau !\n\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitez retirer cette contributaion avant qu'elle ne paraisse dans un Mini Tel', contacte le bureau.")
@@ -144,6 +145,7 @@ async def envoyer_au_bureau(message):
 
 async def envoyer_au_bureau_via_post(author, content):
     channelCitations = bot.get_channel(channelCitationsID)
+    content = content.replace("; ", "\n")
     embedVar = discord.Embed(title="", color=discord.Colour(int("FFFFFF", 16)), description=content)
     embedVar.set_author(name=author.name, icon_url=author.avatar)
     msgembed = await channelCitations.send(embed=embedVar)
@@ -155,6 +157,7 @@ async def envoyer_au_bureau_via_post(author, content):
 
 async def envoyer_dans_channel_dedie(author, content, serverid, minitel):
     channelCitations = bot.get_channel(get_channel_id(serverid))
+    content = content.replace("; ", "\n")
     if minitel:
         embedVar = discord.Embed(title="", color=discord.Colour(int("734F96", 16)), description=content)
     else :
