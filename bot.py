@@ -103,7 +103,7 @@ async def post(ctx: discord.Interaction, message: str, minitel: bool):
         return
     await envoyer_dans_channel_dedie(ctx.user, message, ctx.guild.id, minitel)
     if minitel:
-        server_name = f"Serveur : {ctx.guild.name}"
+        server_name = f"Serveur via /post"
         await ctx.response.send_message(f"**Citation envoyée !** (Le bureau **est** au courant)\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitez retirer cette contributaion avant qu'elle ne paraisse dans un Mini Tel', contacte le bureau.", ephemeral=True)
         await envoyer_au_bureau_via_post(ctx.user, message, server_name)
     else:
