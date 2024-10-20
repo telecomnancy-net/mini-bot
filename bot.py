@@ -133,31 +133,31 @@ async def dump(ctx: discord.Interaction, days: int):
         await ctx.response.send_message("Vous n'avez pas la permission pour utiliser cette commande.", ephemeral=True)
 
 async def envoyer_au_bureau(message):
-    channelCitations = bot.get_channel(channelCitationsID)
-    print(message.content)
-    content = message.content.replace("; ", "\n")
-    embedVar = discord.Embed(title="", color=discord.Colour(int("FFFFFF", 16)), description=content)
-    embedVar.set_author(name=message.author.name, icon_url=message.author.avatar)
-    embedVar.set_footer(text=f"Message privé")
-    msgembed = await channelCitations.send(embed=embedVar)
+    await envoyer_embed_et_reactions(
+        author=message.author,
+        content=message.content,
+        footer_text="Message privé",
+        channel_id=channelCitationsID
+    )
     await message.channel.send(content="Merci pour ta contribution, message transféré au bureau !\n\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitez retirer cette contributaion avant qu'elle ne paraisse dans un Mini Tel', contacte le bureau.")
-    await msgembed.add_reaction('⚫')
-    await msgembed.add_reaction('🔴')
-    await msgembed.add_reaction('🟠')
-    await msgembed.add_reaction('🟢')
-    valeurs = (message.content, message.content, 0, 0, message.author.id)
 
 async def envoyer_au_bureau_via_post(author, content, server_name):
-    channelCitations = bot.get_channel(channelCitationsID)
+    await envoyer_embed_et_reactions(
+        author=author,
+        content=content,
+        footer_text=server_name,
+        channel_id=channelCitationsID
+    )
+
+async def envoyer_embed_et_reactions(author, content, footer_text, channel_id):
+    channel = bot.get_channel(channel_id)
     content = content.replace("; ", "\n")
     embedVar = discord.Embed(title="", color=discord.Colour(int("FFFFFF", 16)), description=content)
     embedVar.set_author(name=author.name, icon_url=author.avatar)
-    embedVar.set_footer(text=server_name)
-    msgembed = await channelCitations.send(embed=embedVar)
-    await msgembed.add_reaction('⚫')
-    await msgembed.add_reaction('🔴')
-    await msgembed.add_reaction('🟠')
-    await msgembed.add_reaction('🟢')
+    embedVar.set_footer(text=footer_text)
+    msgembed = await channel.send(embed=embedVar)
+    for emoji in emojis_couleurs:
+        await msgembed.add_reaction(emoji)
     valeurs = (content, content, 0, 0, author.id)
 
 async def envoyer_dans_channel_dedie(author, content, serverid, minitel):
