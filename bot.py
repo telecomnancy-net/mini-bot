@@ -174,7 +174,10 @@ async def envoyer_embed_et_reactions(author, content, footer_text, channel_id):
     channel = bot.get_channel(channel_id)
     content = content.replace("; ", "\n")
     embedVar = discord.Embed(title="", color=discord.Colour(int("FFFFFF", 16)), description=content)
-    embedVar.set_author(name=author.name, icon_url=author.avatar)
+    if author.avatar is None:
+        embedVar.set_author(name=author.name)
+    else:
+        embedVar.set_author(name=author.name, icon_url=author.avatar)
     embedVar.set_footer(text=footer_text)
     msgembed = await channel.send(embed=embedVar)
     for emoji in emojis_couleurs:
