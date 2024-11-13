@@ -130,7 +130,7 @@ async def post(ctx: discord.Interaction, message: str, minitel: bool):
 
 @tree.command(
     name='dump',
-    description="Dump toutes les citations dans la console"
+    description="Dump toutes les citations dans un fichier .tsv"
 )
 @app_commands.describe(days="Le nombre de jours à remonter dans le passé")
 @app_commands.rename(days="nbjours")
