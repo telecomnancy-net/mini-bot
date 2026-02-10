@@ -27,10 +27,8 @@ except:
     TEACHER_REGEX = ""
 
 
-#channelCitationsID = 692060978342395904
-#mainServerID = 691683236534943826
-channelCitationsID = 754694110266392626
-mainServerID = 638441601861156909
+channelCitationsID = 692060978342395904
+mainServerID = 691683236534943826
 
 serverChannelID = {}
 
