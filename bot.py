@@ -114,10 +114,37 @@ class ConfirmationModal(discord.ui.Modal, title="Confirmation de l’envoi au bu
         else:
             await self.ctx.followup.send("Merci pour ta contribution, message transféré au bureau !\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitent retirer cette contributaion avant qu’elle ne paraisse dans un Mini Tel’, contacte le bureau.\n*Astuce : Dans les DMs du bot, tu peux juste écrire ta citation, pas beosin d’utiliser la commande !*", ephemeral=True)
 
+class ConfirmationView(discord.ui.View):
+    def __init__(self, author, content):
+        super().__init__()
+        self.author = author
+        self.content = content
+    confText = """
+    ## Je confirme avoir demandé l’autorisation de ou des personne(s) concernée(s) avant d’envoyer cette citation au bureau.
+\n\n-# Elle pourra potentiellement apparaître dans le prochain numéro du Mini Tel’. Si toi ou la/les personne(s) concernée(s) souhaitent retirer cette contributaion avant qu’elle ne paraisse dans un Mini Tel’, contacte le bureau.
+\n-# **Note** : ceci ne s’applique pas aux profs, on va leur demander dans tous les cas :3
+    """
+
+    @discord.ui.button(label="Confirmer l’envoi au bureau", style=discord.ButtonStyle.primary)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+        await envoyer_au_bureau_via_post(self.author, self.content, "Message privé")
+        await interaction.message.edit(
+            content="**Citation envoyée au bureau !** (Le bureau a été notifié de cette contribution, elle pourra potentiellement apparaître dans le prochain numéro du Mini Tel')",
+            view=None,
+        )
+
 @bot.event
 async def on_message(message):
     if message.channel.type is discord.ChannelType.private and not message.author.bot:
-        await envoyer_au_bureau(message)
+        if re.search(TEACHER_REGEX, message.content) is not None:
+            await envoyer_au_bureau(message)
+        else:
+            await message.channel.send(
+                content="Avant d’envoyer ta citation au bureau, merci de confirmer que tu as demandé l’autorisation de ou des personne(s) concernée(s).",
+                view=ConfirmationView(message.author, message.content),
+            )
+
 
 ###  Slash commands ###
 
@@ -190,7 +217,6 @@ async def post(ctx: discord.Interaction, message: str, minitel: bool):
             await envoyer_dans_channel_dedie(ctx.user, message, ctx.guild.id, True)
             await ctx.followup.send(f"**Citation envoyée au bureau !** (Le bureau a été notifié de cette contribution, elle pourra potentiellement apparaître dans le prochain numéro du Mini Tel’)", ephemeral=True)
             return
-        
         else:
             await ctx.response.send_modal(ConfirmationModal(ctx, message, f"Serveur {ctx.guild.name} via /post"))
 
@@ -228,7 +254,6 @@ async def envoyer_au_bureau(message):
     """
     Envoie le message reçu en DM au bureau.
     """
-    # TODO Ajouter un popup de confirmation pour assurer que la permission a été demandée.
     await envoyer_embed_et_reactions(
         author=message.author,
         content=message.content,
@@ -241,7 +266,6 @@ async def envoyer_au_bureau_via_post(author, content, server_name):
     """
     Envoie le message reçu via la commande /post au bureau.
     """
-    # TODO Ajouter un popup de confirmation pour assurer que la permission a été demandée.
     await envoyer_embed_et_reactions(
         author=author,
         content=content,
