@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 import datetime
 import io
+import re
 
 from flask import ctx
 
@@ -20,10 +21,16 @@ except:
 TOKEN = open("secrettoken.txt", "r").read()
 tree = app_commands.CommandTree(bot)
 
-channelCitationsID = 692060978342395904
-mainServerID = 691683236534943826
-#channelCitationsID = 754694110266392626
-#mainServerID = 638441601861156909
+try: 
+    TEACHER_REGEX = open("teacher_regex.txt", "r").read()
+except:
+    TEACHER_REGEX = ""
+
+
+#channelCitationsID = 692060978342395904
+#mainServerID = 691683236534943826
+channelCitationsID = 754694110266392626
+mainServerID = 638441601861156909
 
 serverChannelID = {}
 
@@ -94,6 +101,7 @@ class ConfirmationModal(discord.ui.Modal, title="Confirmation de l’envoi au bu
     confText = """
     ## Je confirme avoir demandé l’autorisation de ou des personne(s) concernée(s) avant d’envoyer cette citation au bureau.
 \n\n-# Elle pourra potentiellement apparaître dans le prochain numéro du Mini Tel’. Si toi ou la/les personne(s) concernée(s) souhaitent retirer cette contributaion avant qu’elle ne paraisse dans un Mini Tel’, contacte le bureau.
+\n-# **Note** : ceci ne s’applique pas aux profs, on va leur demander dans tous les cas :3
     """
 
     desc = discord.ui.TextDisplay(content=confText)
@@ -111,7 +119,6 @@ class ConfirmationModal(discord.ui.Modal, title="Confirmation de l’envoi au bu
 @bot.event
 async def on_message(message):
     if message.channel.type is discord.ChannelType.private and not message.author.bot:
-        message.channel.send_modal(ConfirmationModal(ctx=None, content=message.content, method="Message privé"))
         await envoyer_au_bureau(message)
 
 ###  Slash commands ###
@@ -157,13 +164,19 @@ async def setchannel(ctx: discord.Interaction):
     name='post',
     description="Poster une citation"
 )
-@app_commands.describe(message="La citation à poster (n’oublie pas de demander l’autorisation de ou des personnes concernées)")
+@app_commands.describe(message="La citation à poster")
 @app_commands.rename(message="citation")
 @app_commands.describe(minitel="Si la citation doit être envoyée au bureau")
 @app_commands.rename(minitel="envoyer")
 async def post(ctx: discord.Interaction, message: str, minitel: bool):
     if ctx.guild is None:
-        await ctx.response.send_modal(ConfirmationModal(ctx, message, "Message privé"))
+        if re.search(TEACHER_REGEX, message) is not None:
+            await ctx.response.defer(ephemeral=True)
+            await envoyer_au_bureau_via_post(ctx.user, message, "Message privé via /post")
+            await ctx.followup.send("Merci pour ta contribution, message transféré au bureau !\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitent retirer cette contributaion avant qu’elle ne paraisse dans un Mini Tel’, contacte le bureau.\n*Astuce : Dans les DMs du bot, tu peux juste écrire ta citation, pas beosin d’utiliser la commande !*", ephemeral=True)
+
+        else:
+            await ctx.response.send_modal(ConfirmationModal(ctx, message, "Message privé"))
         return
 
     if get_channel_id(ctx.guild.id) is None:
@@ -173,7 +186,16 @@ async def post(ctx: discord.Interaction, message: str, minitel: bool):
 
     # Sent to bureau
     if minitel:
-        await ctx.response.send_modal(ConfirmationModal(ctx, message, f"Serveur {ctx.guild.name} via /post"))
+        if re.search(TEACHER_REGEX, message) is not None:
+            await ctx.response.defer(ephemeral=True)
+            await envoyer_au_bureau_via_post(ctx.user, message, f"Serveur {ctx.guild.name} via /post")
+            await envoyer_dans_channel_dedie(ctx.user, message, ctx.guild.id, True)
+            await ctx.followup.send(f"**Citation envoyée au bureau !** (Le bureau a été notifié de cette contribution, elle pourra potentiellement apparaître dans le prochain numéro du Mini Tel’)", ephemeral=True)
+            return
+        
+        else:
+            await ctx.response.send_modal(ConfirmationModal(ctx, message, f"Serveur {ctx.guild.name} via /post"))
+
     else:
         await ctx.response.defer(ephemeral=True)
         await envoyer_dans_channel_dedie(ctx.user, message, ctx.guild.id, False)
