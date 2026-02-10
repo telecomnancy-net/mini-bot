@@ -5,6 +5,16 @@ import io
 
 default_intents = discord.Intents.all()
 bot = discord.Client(intents=default_intents)
+
+try: 
+    open("channelID.txt", "r").close()
+except:
+    raise Exception("Le fichiers channelID.txt est introuvable. Merci de le créer à la racine du dépôt !")
+
+try:
+    open("secrettoken.txt", "r").close()
+except:
+    raise Exception("Le fichiers secrettoken.txt est introuvable. Merci de le créer à la racine du dépôt et d’y mettre le token de ton bot ! (et de lire le README)")
 TOKEN = open("secrettoken.txt", "r").read()
 tree = app_commands.CommandTree(bot)
 
@@ -13,20 +23,24 @@ mainServerID = 691683236534943826
 serverChannelID = {}
 
 def get_channel_id(serverID):
+    """Retourne l’ID du salon où envoyer les citations pour un serveur donné, ou None si aucun salon n’a été défini."""
     try:
         return serverChannelID[serverID]
     except:
         return None
 
 def set_channel_id(serverID, channelID):
+    """Définit le salon où envoyer les citations pour un serveur donné."""
     serverChannelID[serverID] = channelID
 
 def save_channel_id():
+    """Sauvegarde les IDs des salons dans le fichier channelID.txt"""
     with open("channelID.txt", "w") as f:
         for serverID in serverChannelID:
             f.write(str(serverID) + " " + str(serverChannelID[serverID]) + "\n")
 
 def load_channel_id():
+    """Charge les IDs des salons depuis le fichier channelID.txt"""
     with open("channelID.txt", "r") as f:
         for line in f:
             serverID, channelID = line.split(" ")
@@ -79,15 +93,15 @@ async def help(ctx: discord.Interaction):
 - **Description :** Permet de poster une citation
 - **Utilisation :** `/post [citation] [envoyer]`
 - **Arguments :**
-  - **citation :** La citation à poster
+  - **citation :** La citation à poster (`;` pour les sauts de ligne)
   - **envoyer :** Si la citation doit être envoyée au bureau pour potentiellement apparaître dans le prochain numéro.
 Les citations envoyées à l'aide de la commande post seront envoyées dans le salon défini par la commande /setchannel.
-Il est **impossible** de poster une citation sans qu'un salon ne soit défini.
+Il est **impossible** de poster une citation sans qu’un salon ne soit défini.
 ## Commande /setchannel
 - **Description :** Définir le salon actuel comme salon où envoyer les citations
 - **Utilisation :** `/setchannel`
 - **Arguments :** Aucun
-Vous pouvez toujours envoyer des citations en message privé au bot, elles seront automatiquement transférées au bureau.
+Tu peux toujours envoyer des citations en message privé au bot, elles seront automatiquement transférées au bureau.
 """, ephemeral=True)
 
 @tree.command(
@@ -96,20 +110,21 @@ Vous pouvez toujours envoyer des citations en message privé au bot, elles seron
 )
 async def setchannel(ctx: discord.Interaction):
     if ctx.guild is None:
-        await ctx.response.send_message("Cette commande n'est pas disponible en message privé.", ephemeral=True)
+        await ctx.response.send_message("Cette commande n’est pas disponible en message privé.", ephemeral=True)
         return
-    if ctx.user.guild_permissions.manage_channels:
+
+    if ctx.user.guild_permissions.manage_channels or ctx.permissions.manage_channels:
         set_channel_id(ctx.guild.id, ctx.channel.id)
         save_channel_id()
-        await ctx.response.send_message(f"Le salon où envoyer les citations a été défini à #{ctx.channel.name}", ephemeral=True)
+        await ctx.response.send_message(f"Le salon où envoyer les citations a été défini à <#{ctx.channel.id}>", ephemeral=True)
     else:
-        await ctx.response.send_message("Vous n'avez pas la permission de gérer les salons.", ephemeral=True)
+        await ctx.response.send_message("Tu n’as pas la permission de gérer les salons !", ephemeral=True)
 
 @tree.command(
     name='post',
     description="Poster une citation"
 )
-@app_commands.describe(message="La citation à poster")
+@app_commands.describe(message="La citation à poster (n’oublie pas de demander l’autorisation de ou des personnes concernées)")
 @app_commands.rename(message="citation")
 @app_commands.describe(minitel="Si la citation doit être envoyée au bureau")
 @app_commands.rename(minitel="envoyer")
@@ -117,17 +132,17 @@ async def post(ctx: discord.Interaction, message: str, minitel: bool):
     await ctx.response.defer(ephemeral=True)
     if ctx.guild is None:
         await envoyer_au_bureau_via_post(ctx.user, message, "Message privé")
-        await ctx.followup.send("Merci pour ta contribution, message transféré au bureau !\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitez retirer cette contributaion avant qu'elle ne paraisse dans un Mini Tel', contacte le bureau.\n*Astuce : Tu n'es pas obligé.e d'utiliser /post dans les DMs du bot, tu peux juste y écrire ta citation !*", ephemeral=True)
+        await ctx.followup.send("Merci pour ta contribution, message transféré au bureau !\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitent retirer cette contributaion avant qu’elle ne paraisse dans un Mini Tel’, contacte le bureau.\n*Astuce : Dans les DMs du bot, tu peux juste écrire ta citation, pas beosin d’utiliser la commande !*", ephemeral=True)
         return
     if get_channel_id(ctx.guild.id) is None:
-        await ctx.followup.send("Le salon où envoyer les citations n'a pas été défini. Utilisez la commande **/setchannel** pour le définir.", ephemeral=True)
+        await ctx.followup.send("Le salon où envoyer les citations n’a pas été défini. Utilise la commande `/setchannel` pour le définir.", ephemeral=True)
         return
     await envoyer_dans_channel_dedie(ctx.user, message, ctx.guild.id, minitel)
     if minitel:
         await envoyer_au_bureau_via_post(ctx.user, message, "Serveur via /post")
-        await ctx.followup.send(f"**Citation envoyée !** (Le bureau **est** au courant)\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitez retirer cette contributaion avant qu'elle ne paraisse dans un Mini Tel', contacte le bureau.", ephemeral=True)
+        await ctx.followup.send(f"**Citation envoyée !** (Le bureau **est** au courant)\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitent retirer cette contributaion avant qu’elle ne paraisse dans un Mini Tel’, contacte le bureau.", ephemeral=True)
     else:
-        await ctx.followup.send(f"**Citation envoyée !** (Le bureau n'est **pas** au courant)", ephemeral=True)
+        await ctx.followup.send(f"**Citation envoyée !** (Le bureau n’est **pas** au courant)", ephemeral=True)
 
 @tree.command(
     name='dump',
@@ -139,29 +154,37 @@ async def post(ctx: discord.Interaction, message: str, minitel: bool):
 @app_commands.guilds(mainServerID)
 async def dump(ctx: discord.Interaction, days: int):
     if ctx.guild is None:
-        await ctx.response.send_message("Cette commande n'est pas disponible en message privé.", ephemeral=True)
+        await ctx.response.send_message("Cette commande n’est pas disponible en message privé.", ephemeral=True)
         return
     if ctx.guild_id != mainServerID:
-        await ctx.response.send_message(f"Cette commande n'est pas disponible sur ce serveur.", ephemeral=True)
+        await ctx.response.send_message(f"Cette commande n’est pas disponible sur ce serveur.", ephemeral=True)
         return
     if ctx.user.guild_permissions.administrator:
         await ctx.response.defer(ephemeral=True)
         quote_file, quote_filename = await dump_all_quotes(days)
-        await ctx.followup.send("**Dump effectué !**\nLe fichier est sous format TSV, il est possible de l'ouvrir dans un tableur en définissant les tabulations comme les séparateurs.",
+        await ctx.followup.send("***Dump* effectué !**\nLe fichier est sous format TSV, il est possible de l’ouvrir dans un tableur en définissant les tabulations comme les séparateurs.",
                                         file=discord.File(fp=io.StringIO(quote_file), filename=quote_filename), ephemeral=True)
     else:
-        await ctx.response.send_message("Vous n'avez pas la permission pour utiliser cette commande.", ephemeral=True)
+        await ctx.response.send_message("Tu n’as pas la permission pour utiliser cette commande.", ephemeral=True)
 
 async def envoyer_au_bureau(message):
+    """
+    Envoie le message reçu en DM au bureau.
+    """
+    # TODO Ajouter un popup de confirmation pour assurer que la permission a été demandée.
     await envoyer_embed_et_reactions(
         author=message.author,
         content=message.content,
         footer_text="Message privé",
         channel_id=channelCitationsID
     )
-    await message.channel.send(content="Merci pour ta contribution, message transféré au bureau !\n\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitez retirer cette contributaion avant qu'elle ne paraisse dans un Mini Tel', contacte le bureau.")
+    await message.channel.send(content="Merci pour ta contribution, message transféré au bureau !\n\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitent retirer cette contributaion avant qu’elle ne paraisse dans un Mini Tel’, contacte le bureau.")
 
 async def envoyer_au_bureau_via_post(author, content, server_name):
+    """
+    Envoie le message reçu via la commande /post au bureau.
+    """
+    # TODO Ajouter un popup de confirmation pour assurer que la permission a été demandée.
     await envoyer_embed_et_reactions(
         author=author,
         content=content,
@@ -170,8 +193,12 @@ async def envoyer_au_bureau_via_post(author, content, server_name):
     )
 
 async def envoyer_embed_et_reactions(author, content, footer_text, channel_id):
+    """
+    Envoie le message au bureau sous forme d’embed avec les réactions de couleurs.
+    """
     channel = bot.get_channel(channel_id)
     content = content.replace("; ", "\n")
+    content = content.replace("//", "\n")
     embedVar = discord.Embed(title="", color=discord.Colour(int("FFFFFF", 16)), description=content)
     if author.avatar is None:
         embedVar.set_author(name=author.name)
@@ -184,24 +211,31 @@ async def envoyer_embed_et_reactions(author, content, footer_text, channel_id):
     valeurs = (content, content, 0, 0, author.id)
 
 async def envoyer_dans_channel_dedie(author, content, serverid, minitel):
+    """
+    Envoie le message reçu dans le channel dédié du serveur.
+    """
     channelCitations = bot.get_channel(get_channel_id(serverid))
     content = content.replace("; ", "\n")
+    content = content.replace("//", "\n")
     if minitel:
         embedVar = discord.Embed(title="", color=discord.Colour(int("734F96", 16)), description=content)
-    else :
+    else:
         embedVar = discord.Embed(title="", color=discord.Colour(int("FFFFFF", 16)), description=content)
     embedVar.set_author(name=author.name, icon_url=author.avatar)
     msgembed = await channelCitations.send(embed=embedVar)
     valeurs = (content, content, 0, 0, author.id)
 
 async def dump_all_quotes(days):
+    """
+    Dump toutes les citations des *n* derniers jours dans un format TSV.
+    """
     now = discord.utils.utcnow()
     start_date = now - datetime.timedelta(days=days)
     filename = f"{int(now.timestamp())}.tsv"
     sortie = ""
     sortie += f"-- Dump du {now.day}/{now.month}/{now.year}\n"
     sortie += f"-- À partir du {start_date.day}/{start_date.month}/{start_date.year}\n"
-    sortie += "==== DEBUT DE DUMP ====\n"
+    sortie += "==== DÉBUT DE DUMP ====\n"
     sortie += "Citation\tAuteur\tCouleur\n"
     channelCitations = bot.get_channel(channelCitationsID)
     history = channelCitations.history(limit=None, after=start_date, oldest_first=True)
@@ -214,6 +248,9 @@ async def dump_all_quotes(days):
     return sortie, filename
 
 def get_couleur(col: discord.Colour):
+    """
+    Retourne le nom de la couleur correspondant à un objet discord.Colour.
+    """
     col = str(col)[1:].upper()
     if col == "31373D":
         return 'Noir'
@@ -240,6 +277,6 @@ async def on_ready():
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="vos citations"))
     await tree.sync()
     await tree.sync(guild=discord.Object(mainServerID))
-    print("Le bot est prêt")
+    print("Le bot est prêt !")
 
 bot.run(TOKEN)
