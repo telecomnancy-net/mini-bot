@@ -22,7 +22,8 @@ tree = app_commands.CommandTree(bot)
 try: 
     TEACHER_REGEX = open("teacher_regex.txt", "r").read()
 except:
-    TEACHER_REGEX = ""
+    print("Le fichier teacher_regex.txt est introuvable !")
+    TEACHER_REGEX = "^:3$"
 
 
 channelCitationsID = 692060978342395904
