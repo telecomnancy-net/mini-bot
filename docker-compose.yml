@@ -5,3 +5,4 @@ services:
     build: .
     volumes:
       - ./secrettoken.txt:/app/secrettoken.txt:ro
+      - ./teacher_regex.txt:/app/teacher_regex.txt:ro

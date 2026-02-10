@@ -22,7 +22,8 @@ tree = app_commands.CommandTree(bot)
 try: 
     TEACHER_REGEX = open("teacher_regex.txt", "r").read()
 except:
-    TEACHER_REGEX = ""
+    print("Le fichier teacher_regex.txt est introuvable !")
+    TEACHER_REGEX = "^:3$"
 
 
 channelCitationsID = 692060978342395904
@@ -110,7 +111,7 @@ class ConfirmationModal(discord.ui.Modal, title="Confirmation de l’envoi au bu
             await envoyer_dans_channel_dedie(self.ctx.user, self.content, self.ctx.guild.id, True)
             await self.ctx.followup.send(f"**Citation envoyée au bureau !** (Le bureau a été notifié de cette contribution, elle pourra potentiellement apparaître dans le prochain numéro du Mini Tel’)", ephemeral=True)
         else:
-            await self.ctx.followup.send("Merci pour ta contribution, message transféré au bureau !\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitent retirer cette contributaion avant qu’elle ne paraisse dans un Mini Tel’, contacte le bureau.\n*Astuce : Dans les DMs du bot, tu peux juste écrire ta citation, pas beosin d’utiliser la commande !*", ephemeral=True)
+            await self.ctx.followup.send("Merci pour ta contribution, message transféré au bureau !\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitent retirer cette contributaion avant qu’elle ne paraisse dans un Mini Tel’, contacte le bureau.\n*Astuce : Dans les DMs du bot, tu peux juste écrire ta citation, pas besoin d’utiliser la commande !*", ephemeral=True)
 
 class ConfirmationView(discord.ui.View):
     def __init__(self, author, content):
