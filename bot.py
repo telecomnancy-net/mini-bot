@@ -4,8 +4,6 @@ import datetime
 import io
 import re
 
-from flask import ctx
-
 default_intents = discord.Intents.all()
 bot = discord.Client(intents=default_intents)
 
