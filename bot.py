@@ -3,6 +3,8 @@ from discord import app_commands
 import datetime
 import io
 
+from flask import ctx
+
 default_intents = discord.Intents.all()
 bot = discord.Client(intents=default_intents)
 
@@ -20,6 +22,9 @@ tree = app_commands.CommandTree(bot)
 
 channelCitationsID = 692060978342395904
 mainServerID = 691683236534943826
+#channelCitationsID = 754694110266392626
+#mainServerID = 638441601861156909
+
 serverChannelID = {}
 
 def get_channel_id(serverID):
@@ -78,10 +83,38 @@ def process_react(Lreac):
     else: return 'FFFFFF'
     
 
+
+class ConfirmationModal(discord.ui.Modal, title="Confirmation de l’envoi au bureau"):
+    def __init__(self, ctx, content, method):
+        super().__init__()
+        self.ctx = ctx
+        self.content = content
+        self.method = method
+
+    confText = """
+    ## Je confirme avoir demandé l’autorisation de ou des personne(s) concernée(s) avant d’envoyer cette citation au bureau.
+\n\n-# Elle pourra potentiellement apparaître dans le prochain numéro du Mini Tel’. Si toi ou la/les personne(s) concernée(s) souhaitent retirer cette contributaion avant qu’elle ne paraisse dans un Mini Tel’, contacte le bureau.
+    """
+
+    desc = discord.ui.TextDisplay(content=confText)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        await envoyer_au_bureau_via_post(self.ctx.user, self.content, self.method)
+
+        if self.ctx.guild is not None:
+            await envoyer_dans_channel_dedie(self.ctx.user, self.content, self.ctx.guild.id, True)
+            await self.ctx.followup.send(f"**Citation envoyée au bureau !** (Le bureau a été notifié de cette contribution, elle pourra potentiellement apparaître dans le prochain numéro du Mini Tel’)", ephemeral=True)
+        else:
+            await self.ctx.followup.send("Merci pour ta contribution, message transféré au bureau !\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitent retirer cette contributaion avant qu’elle ne paraisse dans un Mini Tel’, contacte le bureau.\n*Astuce : Dans les DMs du bot, tu peux juste écrire ta citation, pas beosin d’utiliser la commande !*", ephemeral=True)
+
 @bot.event
 async def on_message(message):
     if message.channel.type is discord.ChannelType.private and not message.author.bot:
+        message.channel.send_modal(ConfirmationModal(ctx=None, content=message.content, method="Message privé"))
         await envoyer_au_bureau(message)
+
+###  Slash commands ###
 
 @tree.command(
     name='help',
@@ -129,19 +162,21 @@ async def setchannel(ctx: discord.Interaction):
 @app_commands.describe(minitel="Si la citation doit être envoyée au bureau")
 @app_commands.rename(minitel="envoyer")
 async def post(ctx: discord.Interaction, message: str, minitel: bool):
-    await ctx.response.defer(ephemeral=True)
     if ctx.guild is None:
-        await envoyer_au_bureau_via_post(ctx.user, message, "Message privé")
-        await ctx.followup.send("Merci pour ta contribution, message transféré au bureau !\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitent retirer cette contributaion avant qu’elle ne paraisse dans un Mini Tel’, contacte le bureau.\n*Astuce : Dans les DMs du bot, tu peux juste écrire ta citation, pas beosin d’utiliser la commande !*", ephemeral=True)
+        await ctx.response.send_modal(ConfirmationModal(ctx, message, "Message privé"))
         return
+
     if get_channel_id(ctx.guild.id) is None:
+        await ctx.response.defer(ephemeral=True)
         await ctx.followup.send("Le salon où envoyer les citations n’a pas été défini. Utilise la commande `/setchannel` pour le définir.", ephemeral=True)
         return
-    await envoyer_dans_channel_dedie(ctx.user, message, ctx.guild.id, minitel)
+
+    # Sent to bureau
     if minitel:
-        await envoyer_au_bureau_via_post(ctx.user, message, "Serveur via /post")
-        await ctx.followup.send(f"**Citation envoyée !** (Le bureau **est** au courant)\n**Rappel :** Si toi ou la/les personne(s) concernée(s) souhaitent retirer cette contributaion avant qu’elle ne paraisse dans un Mini Tel’, contacte le bureau.", ephemeral=True)
+        await ctx.response.send_modal(ConfirmationModal(ctx, message, f"Serveur {ctx.guild.name} via /post"))
     else:
+        await ctx.response.defer(ephemeral=True)
+        await envoyer_dans_channel_dedie(ctx.user, message, ctx.guild.id, False)
         await ctx.followup.send(f"**Citation envoyée !** (Le bureau n’est **pas** au courant)", ephemeral=True)
 
 @tree.command(
@@ -166,6 +201,8 @@ async def dump(ctx: discord.Interaction, days: int):
                                         file=discord.File(fp=io.StringIO(quote_file), filename=quote_filename), ephemeral=True)
     else:
         await ctx.response.send_message("Tu n’as pas la permission pour utiliser cette commande.", ephemeral=True)
+
+### Fonctions auxiliaires ###
 
 async def envoyer_au_bureau(message):
     """
@@ -262,6 +299,8 @@ def get_couleur(col: discord.Colour):
         return 'Vert'
     else:
         return 'Blanc'
+
+### Évènements ###
 
 @bot.event
 async def on_raw_reaction_add(payload):    
