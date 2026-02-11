@@ -356,7 +356,7 @@ async def on_raw_reaction_remove(payload):
 @bot.event
 async def on_ready():
     load_channel_id()
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="vos citations"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="Écoute vos citations…"))
     await tree.sync()
     await tree.sync(guild=discord.Object(mainServerID))
     print("Le bot est prêt !")
