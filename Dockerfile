@@ -6,5 +6,6 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 USER 1001
+COPY teacher_regex.txt .
 COPY bot.py .
 CMD ["python", "bot.py"]
