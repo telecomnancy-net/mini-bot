@@ -67,14 +67,25 @@ async def reac(payload):
         for r in message.reactions:
             if r.emoji in emojis_couleurs: Lreac[r.emoji] = r.count
         col = process_react(Lreac)
+
+        current_color = f"{message.embeds[0].color.value:06X}"
+        if current_color == col:
+            return
                     
         embedVar = discord.Embed(title="", color=discord.Colour(int(col, 16)), description=message.embeds[0].description)
         embedVar.set_author(name=message.embeds[0].author.name, icon_url=message.embeds[0].author.icon_url)
         embedVar.set_footer(text=message.embeds[0].footer.text)
-        
-        await message.edit(embed=embedVar)
+
+        try:
+            await message.edit(embed=embedVar)
+        except discord.HTTPException as e:
+            if getattr(e, "code", None) == 30046:
+                return
+            raise
 
 def process_react(Lreac):
+    if not Lreac:
+        return 'FFFFFF'
     max_reac = max(Lreac.values())
     if max_reac == 1: return 'FFFFFF'
     if '⚫' in Lreac and Lreac['⚫'] > 1: return '31373D'
